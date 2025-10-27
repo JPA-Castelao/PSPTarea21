@@ -1,124 +1,125 @@
 import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.Thread.sleep;
 
 public class tarea21 {
 
+    static void main(String[] args) {
 
-    static void main() {
-        parking p = new parking(5);
 
-        coche c1 = new coche(1, p);
-        coche c2 = new coche(2, p);
-        coche c4 = new coche(4, p);
-        coche c3 = new coche(3, p);
-        coche c5 = new coche(5, p);
-        coche c6 = new coche(6, p);
+        parking p = new parking(3);
 
-        c1.start();
-        c2.start();
-        c3.start();
-        c4.start();
-        c5.start();
-        c6.start();
+        coches c = new coches(5, p);
 
 
     }
+
 }
 
+class coches {
+    private ArrayList<coche> listaCoches = new ArrayList<>();
+
+    public coches(int cantidad, parking p) {
+
+        for (int i = 1; i <= cantidad; i++) {
+
+            coche c = new coche(i, p);
+            this.listaCoches.add(c);
+
+
+        }
+
+        for (coche c : this.listaCoches) {
+            c.start();
+        }
+
+    }
+
+
+}
+
+
 class coche extends Thread {
+
     private parking p;
-    int IDCoche;
+    private int IDCoche;
 
     public coche(int IDCoche, parking p) {
-        this.IDCoche = IDCoche;
+
         this.p = p;
+        this.IDCoche = IDCoche;
     }
 
     @Override
     public void run() {
 
-        this.p.entrar(this.IDCoche);
-        try {
-            sleep(1000);
 
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        while (true) {
+            try {
+                sleep((long) (((Math.random() * (5)) + 1) * 1000));
+                p.entrada(IDCoche);
+                sleep((long) (((Math.random() * (5)) + 1) * 1000));
+                p.salir(IDCoche);
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
         }
-        this.p.salir(this.IDCoche);
-
     }
 
 }
 
 
 class parking {
+    private List<Integer> plazas = new ArrayList<>();
 
-    private ArrayList<Integer> plazas = new ArrayList<>();
 
     public parking(int numeroPlazas) {
-
-        tamañoParking(numeroPlazas);
-        System.out.println(plazas.size());
-    }
-
-    private void tamañoParking(int numeroPlazas) {
-
         for (int i = 0; i < numeroPlazas; i++) {
-            plazas.add(0);
 
+            this.plazas.add(0);
         }
 
+
     }
 
-    public synchronized void entrar(int IDcoche) {
 
-        int numeroPlaza;
+    public synchronized void entrada(int IDCoche) {
+
 
         while (!plazas.contains(0)) {
-
-            System.out.println("Parking lleno");
-
             try {
+                System.out.println("Parking lleno, coche " + IDCoche + " debe esperar");
                 wait();
             } catch (InterruptedException e) {
-                System.err.println(e.getMessage());
-                throw new RuntimeException(e);
+
             }
         }
-
-        numeroPlaza = plazas.indexOf(0);
-        plazas.set(numeroPlaza, IDcoche);
-        System.out.println("El coche  " + IDcoche + " ha ocupado la plaza " + numeroPlaza);
-
-
-        notifyAll();
+        int plazaLibre = plazas.indexOf(0);
+        this.plazas.set(plazaLibre, IDCoche);
+        System.out.println("El coche " + IDCoche + " ha ocupado la plaza " + plazaLibre);
 
 
     }
 
+    public synchronized void salir(int IDCoche) {
 
-    public synchronized void salir(int IDcoche) {
+        if (plazas.contains(IDCoche)) {
+            int plazaOcupada = plazas.indexOf(IDCoche);
+            System.out.println("El coche " + IDCoche + " ha abandonado la plaza " + plazaOcupada);
+            plazas.set(plazaOcupada, 0);
+            notifyAll();
+        } else {
+            System.out.println("El coche " + IDCoche + " no está aquí");
 
-       int numeroPlaza=plazas.indexOf(IDcoche);
-
-       if(numeroPlaza!=-1){
-
-           plazas.set(numeroPlaza, 0);
-           System.out.println("El coche  " + IDcoche + " ha abandonado la plaza " + numeroPlaza);
-
-
-       }else{
-           System.out.println("Ese coche no está aquí");
-           try {
-               wait();
-           } catch (InterruptedException e) {
-               throw new RuntimeException(e);
-           }
-       }
-        notifyAll();
+        }
 
     }
 
 
 }
+
+
+
